@@ -59,15 +59,15 @@ export default function Navbar() {
         </div>
 
         {/* User + Logout (Desktop) */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-5">
           {user && (
-            <span className="text-sm bg-slate-100/50 px-3 py-1 rounded-full shadow-sm text-gray-700">
+            <span className="text-lg text-gray-700 font-semibold">
               {user.name}
             </span>
           )}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1 bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition"
+            className="flex items-center gap-1 bg-red-500 text-white px-3 py-1.5 rounded-full hover:bg-red-600 transition"
           >
             <LogOut size={16} /> Logout
           </button>
@@ -109,7 +109,7 @@ export default function Navbar() {
               onClick={handleLogout}
               className="flex items-center justify-center gap-1 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition"
             >
-              <LogOut size={16} /> Logout
+              <LogOut size={24} /> Logout
             </button>
           </div>
         </div>
