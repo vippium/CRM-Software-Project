@@ -2,12 +2,25 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
 import API from "../services/api.js";
-import { Trash2, Plus, ClipboardCheck, Edit } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  ClipboardCheck,
+  Edit,
+  Clock,
+  Loader,
+  CheckCircle,
+  ArrowUp,
+  Minus,
+  ArrowDown,
+} from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
+import { getUser, isAdmin, isSales } from "../services/auth.js";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [sortState, setSortState] = useState({ key: null, direction: null });
+  const user = getUser();
 
   const fetchTasks = async () => {
     try {
@@ -93,16 +106,55 @@ export default function Tasks() {
     { label: "Assigned To", key: "assignedTo", responsive: "lg:table-cell" },
   ];
 
-  const getPriorityColor = (priority) => {
+  // ✅ Status pill badges
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Pending":
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700">
+            <Clock size={14} /> Pending
+          </span>
+        );
+      case "In Progress":
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+            <Loader size={14} className="animate-spin" /> In Progress
+          </span>
+        );
+      case "Completed":
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+            <CheckCircle size={14} /> Completed
+          </span>
+        );
+      default:
+        return status;
+    }
+  };
+
+  // ✅ Priority pill badges
+  const getPriorityBadge = (priority) => {
     switch (priority) {
       case "High":
-        return "text-red-600 font-semibold";
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
+            <ArrowUp size={14} /> High
+          </span>
+        );
       case "Medium":
-        return "text-yellow-600 font-semibold";
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
+            <Minus size={14} /> Medium
+          </span>
+        );
       case "Low":
-        return "text-green-600 font-semibold";
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+            <ArrowDown size={14} /> Low
+          </span>
+        );
       default:
-        return "text-gray-700";
+        return priority;
     }
   };
 
@@ -115,31 +167,41 @@ export default function Tasks() {
     >
       <td className="p-4 font-medium">{t.title}</td>
       <td className="p-4 hidden md:table-cell">
-        {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "-"}
+        {t.dueDate
+          ? new Date(t.dueDate)
+              .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+              .replace(/ /g, "-")
+          : "-"}
       </td>
-      <td className="p-4 hidden lg:table-cell">{t.status}</td>
-      <td
-        className={`p-4 hidden lg:table-cell ${getPriorityColor(t.priority)}`}
-      >
-        {t.priority || "-"}
+      <td className="p-4 hidden lg:table-cell">{getStatusBadge(t.status)}</td>
+      <td className="p-4 hidden lg:table-cell">
+        {getPriorityBadge(t.priority)}
       </td>
-      <td className="p-4 hidden lg:table-cell">{t.assignedTo || "-"}</td>
+      <td className="p-4 hidden lg:table-cell">{t.assignedTo?.name || "-"}</td>
       <td className="p-4 text-center">
         <div className="flex justify-center gap-3">
-          <Link
-            to={`/tasks/${t._id}/edit`}
-            className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
-            title="Edit Task"
-          >
-            <Edit size={18} />
-          </Link>
-          <button
-            onClick={() => handleDelete(t._id)}
-            className="text-red-500 hover:text-red-700 transition-colors duration-200"
-            title="Delete Task"
-          >
-            <Trash2 size={18} />
-          </button>
+          {(isAdmin() || isSales()) && (
+            <Link
+              to={`/tasks/${t._id}/edit`}
+              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+              title="Edit Task"
+            >
+              <Edit size={18} />
+            </Link>
+          )}
+          {isAdmin() && (
+            <button
+              onClick={() => handleDelete(t._id)}
+              className="text-red-500 hover:text-red-700 transition-colors duration-200"
+              title="Delete Task"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -147,21 +209,21 @@ export default function Tasks() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-20 pt-14">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
           <ClipboardCheck size={28} className="text-blue-600" />
           Tasks
         </h1>
-        <Link
-          to="/tasks/new"
-          className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
-        >
-          <Plus size={18} /> Add Task
-        </Link>
+        {isAdmin() && (
+          <Link
+            to="/tasks/new"
+            className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
+          >
+            <Plus size={18} /> Add Task
+          </Link>
+        )}
       </div>
 
-      {/* List */}
       <GlassCard className="p-0">
         {tasks.length === 0 ? (
           <p className="p-8 text-center text-gray-600 italic">

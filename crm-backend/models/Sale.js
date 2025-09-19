@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const saleSchema = new mongoose.Schema({
     customerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Customer", // 👈 Reference to Customer collection
+        ref: "Customer",
         required: true,
     },
     amount: { type: Number, required: true },
@@ -13,7 +13,10 @@ const saleSchema = new mongoose.Schema({
         default: "Prospecting",
     },
     date: { type: Date, required: true },
-    assignedRep: { type: String },
+    assignedRep: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
 }, { timestamps: true });
 
 export default mongoose.model("Sale", saleSchema);

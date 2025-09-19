@@ -45,26 +45,15 @@ export default function Customers() {
   };
 
   const getSortedCustomers = () => {
-    if (!sortState.key || !sortState.direction) {
-      return customers;
-    }
+    if (!sortState.key || !sortState.direction) return customers;
 
     const sorted = [...customers].sort((a, b) => {
-      const aValue = a[sortState.key];
-      const bValue = b[sortState.key];
+      const aValue = a[sortState.key] || "";
+      const bValue = b[sortState.key] || "";
 
       if (aValue === bValue) return 0;
-
-      if (typeof aValue === "string") {
-        const compareResult = aValue.localeCompare(bValue);
-        return sortState.direction === "asc" ? compareResult : -compareResult;
-      }
-
-      if (sortState.direction === "asc") {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue > bValue ? -1 : 1;
-      }
+      const compareResult = aValue.toString().localeCompare(bValue.toString());
+      return sortState.direction === "asc" ? compareResult : -compareResult;
     });
 
     return sorted;
@@ -122,6 +111,7 @@ export default function Customers() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-20 pt-14">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
           <ClipboardList size={28} className="text-blue-600" />
@@ -137,6 +127,7 @@ export default function Customers() {
         )}
       </div>
 
+      {/* List */}
       <GlassCard className="p-0">
         {customers.length === 0 ? (
           <p className="p-8 text-center text-gray-600 italic">

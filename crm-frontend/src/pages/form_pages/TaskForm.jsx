@@ -6,11 +6,13 @@ import FormTextarea from "../../components/FormTextarea.jsx";
 import FormSelect from "../../components/FormSelect.jsx";
 import API from "../../services/api.js";
 import { Plus, ClipboardCheck, Edit } from "lucide-react";
+import { getUser, isSales } from "../../services/auth.js";
 
 export default function TaskForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const user = getUser();
 
   const [form, setForm] = useState({
     title: "",
@@ -21,14 +23,32 @@ export default function TaskForm() {
     assignedTo: "",
   });
 
+  const [users, setUsers] = useState([]);
+
   useEffect(() => {
+    API.get("/users/sales-reps")
+      .then((res) => setUsers(res.data))
+      .catch((err) => console.error("Error fetching sales reps", err));
+  }, []);
+
+  useEffect(() => {
+    if (!isEditing && isSales()) {
+      navigate("/tasks");
+    }
+
     if (isEditing) {
       API.get(`/tasks/${id}`)
         .then((res) => {
-          // Format date for the input field
           const taskData = {
-            ...res.data,
+            title: res.data.title || "",
+            description: res.data.description || "",
             dueDate: res.data.dueDate ? res.data.dueDate.split("T")[0] : "",
+            status: res.data.status || "Pending",
+            priority: res.data.priority || "Medium",
+            assignedTo:
+              typeof res.data.assignedTo === "string"
+                ? res.data.assignedTo
+                : res.data.assignedTo?._id || "",
           };
           setForm(taskData);
         })
@@ -117,12 +137,20 @@ export default function TaskForm() {
             onChange={handleChange}
             options={priorityOptions}
           />
-          <FormInput
+          <FormSelect
             label="Assigned To"
             name="assignedTo"
             value={form.assignedTo}
             onChange={handleChange}
+            options={[
+              { value: "", label: "Select Sales Rep" },
+              ...users.map((rep) => ({
+                value: rep._id,
+                label: `${rep.name} (${rep.email})`,
+              })),
+            ]}
           />
+
           <FormTextarea
             label="Description"
             name="description"
