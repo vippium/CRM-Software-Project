@@ -58,9 +58,35 @@ const chartOptions = {
 
 // 🔹 Helper to calculate MoM change safely
 const calculateMoMChange = (current, previous) => {
-  if (!previous || previous === 0) return null; // no valid comparison
+  if (!previous || previous === 0) return null;
   return ((current - previous) / previous) * 100;
 };
+
+// 🔹 Skeleton Components
+const StatsSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+    {[...Array(4)].map((_, i) => (
+      <div
+        key={i}
+        className="p-6 rounded-2xl bg-white shadow animate-pulse flex items-center gap-6"
+      >
+        <div className="w-12 h-12 bg-gray-200 rounded-2xl"></div>
+        <div className="flex-1 space-y-3">
+          <div className="h-3 bg-gray-200 rounded w-20"></div>
+          <div className="h-6 bg-gray-200 rounded w-16"></div>
+          <div className="h-3 bg-gray-200 rounded w-24"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const ChartSkeleton = () => (
+  <div className="p-6 h-96 rounded-2xl bg-white shadow animate-pulse">
+    <div className="h-6 w-32 bg-gray-200 rounded mb-4"></div>
+    <div className="h-full w-full bg-gray-200 rounded"></div>
+  </div>
+);
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -99,18 +125,26 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchUserAndData();
-    const interval = setInterval(fetchUserAndData, 30000); // refresh every 30s
+    const interval = setInterval(fetchUserAndData, 30000);
     return () => clearInterval(interval);
   }, [navigate]);
 
   if (loading)
     return (
-      <div className="p-16 text-gray-700 text-xl">Loading Dashboard...</div>
+      <div className="p-16 space-y-12">
+        <StatsSkeleton />
+        <div className="px-24 grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <ChartSkeleton />
+          <ChartSkeleton />
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+      </div>
     );
 
   const isAdmin = user?.role === "admin";
 
-  // 🔹 Filtering data based on role
+  // 🔹 Filtered data
   const filteredCustomers = isAdmin
     ? customers
     : customers.filter((c) => c.assignedRep?._id === user._id);
@@ -124,72 +158,59 @@ export default function Dashboard() {
     ? sales
     : sales.filter((s) => s.assignedRep?._id === user._id);
 
-  // 🔹 Current & Previous month
+  // 🔹 MoM calculations
   const currentMonth = new Date().getMonth();
   const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
 
-  // 🔹 Month-over-Month counts
-  const customersThisMonth = filteredCustomers.filter(
-    (c) => new Date(c.createdAt).getMonth() === currentMonth
-  ).length;
-  const customersLastMonth = filteredCustomers.filter(
-    (c) => new Date(c.createdAt).getMonth() === previousMonth
-  ).length;
+  const countByMonth = (items, key) =>
+    items.filter((i) => new Date(i[key]).getMonth() === currentMonth).length;
+  const countByPrevMonth = (items, key) =>
+    items.filter((i) => new Date(i[key]).getMonth() === previousMonth).length;
 
-  const leadsThisMonth = filteredLeads.filter(
-    (l) => new Date(l.createdAt).getMonth() === currentMonth
-  ).length;
-  const leadsLastMonth = filteredLeads.filter(
-    (l) => new Date(l.createdAt).getMonth() === previousMonth
-  ).length;
-
-  const tasksThisMonth = filteredTasks.filter(
-    (t) => new Date(t.createdAt).getMonth() === currentMonth
-  ).length;
-  const tasksLastMonth = filteredTasks.filter(
-    (t) => new Date(t.createdAt).getMonth() === previousMonth
-  ).length;
-
-  const salesThisMonth = filteredSales.filter(
-    (s) => new Date(s.date).getMonth() === currentMonth
-  ).length;
-  const salesLastMonth = filteredSales.filter(
-    (s) => new Date(s.date).getMonth() === previousMonth
-  ).length;
-
-  // 🔹 Stats with MoM change
   const stats = [
     {
       label: "Customers",
       value: filteredCustomers.length,
-      change: calculateMoMChange(customersThisMonth, customersLastMonth),
+      change: calculateMoMChange(
+        countByMonth(filteredCustomers, "createdAt"),
+        countByPrevMonth(filteredCustomers, "createdAt")
+      ),
       icon: <Users size={28} />,
       color: "bg-blue-100 text-blue-600",
     },
     {
       label: "Leads",
       value: filteredLeads.length,
-      change: calculateMoMChange(leadsThisMonth, leadsLastMonth),
+      change: calculateMoMChange(
+        countByMonth(filteredLeads, "createdAt"),
+        countByPrevMonth(filteredLeads, "createdAt")
+      ),
       icon: <Target size={28} />,
       color: "bg-green-100 text-green-600",
     },
     {
       label: "Tasks",
       value: filteredTasks.length,
-      change: calculateMoMChange(tasksThisMonth, tasksLastMonth),
+      change: calculateMoMChange(
+        countByMonth(filteredTasks, "createdAt"),
+        countByPrevMonth(filteredTasks, "createdAt")
+      ),
       icon: <CheckSquare size={28} />,
       color: "bg-yellow-100 text-yellow-600",
     },
     {
       label: "Sales",
       value: filteredSales.length,
-      change: calculateMoMChange(salesThisMonth, salesLastMonth),
+      change: calculateMoMChange(
+        countByMonth(filteredSales, "date"),
+        countByPrevMonth(filteredSales, "date")
+      ),
       icon: <ShoppingCart size={28} />,
       color: "bg-purple-100 text-purple-600",
     },
   ];
 
-  // 🔹 Chart Data Generators
+  // 🔹 Chart data
   const generateStatusData = (items, colors) => {
     const counts = items.reduce((acc, item) => {
       acc[item.status] = (acc[item.status] || 0) + 1;
@@ -262,7 +283,7 @@ export default function Dashboard() {
     ],
   };
 
-  // 🔹 CSV export
+  // 🔹 Export handlers
   const csvData = [
     ["Type", "Name", "Status", "Amount/ID"],
     ...filteredCustomers.map((c) => ["Customer", c.name, "-", c._id]),
@@ -276,7 +297,6 @@ export default function Dashboard() {
     ]),
   ];
 
-  // 🔹 PDF export
   const handlePDFExport = async () => {
     if (!dashboardRef.current) return;
     const canvas = await html2canvas(dashboardRef.current, { scale: 2 });
@@ -351,7 +371,6 @@ export default function Dashboard() {
 
       {/* Charts Section */}
       <div className="px-24 grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Sales Status */}
         <GlassCard className="p-6 h-96 flex flex-col">
           <div className="flex items-center gap-3 mb-4 text-gray-700">
             <PieChart size={24} />
@@ -366,7 +385,6 @@ export default function Dashboard() {
           </div>
         </GlassCard>
 
-        {/* Monthly Sales (Admin only) */}
         {isAdmin && (
           <GlassCard className="p-6 h-96 flex flex-col">
             <div className="flex items-center gap-3 mb-4 text-gray-700">
@@ -383,7 +401,6 @@ export default function Dashboard() {
           </GlassCard>
         )}
 
-        {/* Leads Status */}
         <GlassCard className="p-6 h-96 flex flex-col">
           <div className="flex items-center gap-3 mb-4 text-gray-700">
             <PieChart size={24} />
@@ -398,7 +415,6 @@ export default function Dashboard() {
           </div>
         </GlassCard>
 
-        {/* Tasks Status */}
         <GlassCard className="p-6 h-96 flex flex-col">
           <div className="flex items-center gap-3 mb-4 text-gray-700">
             <PieChart size={24} />
