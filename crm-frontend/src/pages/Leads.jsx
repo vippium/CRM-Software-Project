@@ -21,9 +21,18 @@ import {
 import DataTable from "../components/DataTable.jsx";
 import { isAdmin, isSales } from "../services/auth.js";
 
+// 🔹 Simple Skeleton Component
+const Skeleton = ({ className }) => (
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+);
+
 export default function Leads() {
   const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sortState, setSortState] = useState({ key: null, direction: null });
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [reps, setReps] = useState([]);
 
   const fetchLeads = async () => {
     try {
@@ -31,11 +40,23 @@ export default function Leads() {
       setLeads(data);
     } catch (err) {
       console.error("Error fetching leads", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchReps = async () => {
+    try {
+      const { data } = await API.get("/users");
+      setReps(data.filter((u) => u.role === "sales"));
+    } catch (err) {
+      console.error("Error fetching reps", err);
     }
   };
 
   useEffect(() => {
     fetchLeads();
+    if (isAdmin()) fetchReps();
   }, []);
 
   const handleSort = (key) => {
@@ -66,8 +87,6 @@ export default function Leads() {
 
     return sorted;
   };
-
-  const sortedLeads = getSortedLeads();
 
   const handleDelete = async (id) => {
     try {
@@ -174,7 +193,31 @@ export default function Leads() {
       <td className="p-4 hidden lg:table-cell">{getSourceBadge(l.source)}</td>
       <td className="p-4 hidden lg:table-cell">{getStatusBadge(l.status)}</td>
       <td className="p-4 hidden lg:table-cell">
-        {l.assignedRep ? l.assignedRep.name : "Unassigned"}
+        {isAdmin() ? (
+          <select
+            value={l.assignedRep?._id || ""}
+            onChange={async (e) => {
+              try {
+                await API.put(`/leads/${l._id}`, {
+                  assignedRep: e.target.value,
+                });
+                fetchLeads();
+              } catch (err) {
+                console.error("Error assigning rep", err);
+              }
+            }}
+            className="border border-gray-300 rounded px-2 py-1 text-sm"
+          >
+            <option value="">Unassigned</option>
+            {reps.map((rep) => (
+              <option key={rep._id} value={rep._id}>
+                {rep.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          l.assignedRep?.name || "Unassigned"
+        )}
       </td>
       {(isAdmin() || isSales()) && (
         <td className="p-4 text-center">
@@ -201,25 +244,95 @@ export default function Leads() {
     </tr>
   );
 
+  // filters
+  const sortedLeads = getSortedLeads();
+  const filteredLeads = sortedLeads.filter((l) => {
+    return (
+      (statusFilter ? l.status === statusFilter : true) &&
+      (sourceFilter ? l.source === sourceFilter : true)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-20 pt-14">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <Target size={28} className="text-blue-600" />
-          Leads
-        </h1>
-        {isAdmin() && (
-          <Link
-            to="/leads/new"
-            className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
-          >
-            <Plus size={18} /> Add Lead
-          </Link>
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <Skeleton className="w-8 h-8 rounded-full" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+        ) : (
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Target size={28} className="text-blue-600" />
+            Leads
+          </h1>
+        )}
+        {loading ? (
+          <Skeleton className="h-10 w-32 rounded-full" />
+        ) : (
+          isAdmin() && (
+            <Link
+              to="/leads/new"
+              className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
+            >
+              <Plus size={18} /> Add Lead
+            </Link>
+          )
         )}
       </div>
 
+      {/* Filters */}
+      {!loading && (
+        <div className="flex flex-wrap gap-4 mb-6">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 rounded-full border border-gray-400 bg-white shadow-sm 
+                 text-gray-700 focus:outline-none transition duration-200"
+          >
+            <option value="">All Statuses</option>
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="Qualified">Qualified</option>
+            <option value="Converted">Converted</option>
+            <option value="Lost">Lost</option>
+          </select>
+
+          <select
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value)}
+            className="px-4 py-2 rounded-full border border-gray-400 bg-white shadow-sm 
+                 text-gray-700 focus:outline-none transition duration-200"
+          >
+            <option value="">All Sources</option>
+            <option value="Website">Website</option>
+            <option value="Email">Email</option>
+            <option value="Phone">Phone</option>
+            <option value="Referral">Referral</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      )}
+
+      {/* List */}
       <GlassCard className="p-0">
-        {leads.length === 0 ? (
+        {loading ? (
+          <div className="p-6">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 mb-4 last:mb-0 animate-pulse"
+              >
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-24 hidden md:block" />
+                <Skeleton className="h-5 w-20 hidden lg:block" />
+                <Skeleton className="h-5 w-20 hidden lg:block" />
+                <Skeleton className="h-5 w-28 hidden lg:block" />
+              </div>
+            ))}
+          </div>
+        ) : filteredLeads.length === 0 ? (
           <p className="p-8 text-center text-gray-600 italic">
             No leads found.
             {isAdmin() && ' Click "Add Lead" to get started.'}
@@ -227,7 +340,7 @@ export default function Leads() {
         ) : (
           <DataTable
             headers={tableHeaders}
-            data={sortedLeads}
+            data={filteredLeads}
             sortState={sortState}
             onSort={handleSort}
             renderRow={renderRow}
