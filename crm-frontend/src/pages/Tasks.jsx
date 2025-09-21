@@ -9,18 +9,23 @@ import {
   Edit,
   Clock,
   Loader,
-  CheckCircle,
+  CheckCheck,
   ArrowUp,
   Minus,
   ArrowDown,
 } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
-import { getUser, isAdmin, isSales } from "../services/auth.js";
+import { isAdmin, isSales } from "../services/auth.js";
+
+/* Simple Skeleton Loader */
+const Skeleton = ({ className }) => (
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+);
 
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [sortState, setSortState] = useState({ key: null, direction: null });
-  const user = getUser();
 
   const fetchTasks = async () => {
     try {
@@ -28,6 +33,8 @@ export default function Tasks() {
       setTasks(data);
     } catch (err) {
       console.error("Error fetching tasks", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,12 +72,20 @@ export default function Tasks() {
   };
 
   const getSortedTasks = () => {
-    if (!sortState.key || !sortState.direction) return tasks;
+    let data = [...tasks];
+
+    data.sort((a, b) => {
+      if (a.status === "Completed" && b.status !== "Completed") return 1;
+      if (b.status === "Completed" && a.status !== "Completed") return -1;
+      return 0;
+    });
+
+    if (!sortState.key || !sortState.direction) return data;
 
     const key = sortState.key;
     const dir = sortState.direction;
 
-    const sorted = [...tasks].sort((a, b) => {
+    data.sort((a, b) => {
       let aVal = getValueByKey(a, key);
       let bVal = getValueByKey(b, key);
 
@@ -93,7 +108,7 @@ export default function Tasks() {
       return dir === "asc" ? cmp : -cmp;
     });
 
-    return sorted;
+    return data;
   };
 
   const sortedTasks = getSortedTasks();
@@ -103,10 +118,14 @@ export default function Tasks() {
     { label: "Due Date", key: "dueDate", responsive: "md:table-cell" },
     { label: "Status", key: "status", responsive: "lg:table-cell" },
     { label: "Priority", key: "priority", responsive: "lg:table-cell" },
-    { label: "Assigned To", key: "assignedTo", responsive: "lg:table-cell" },
+    {
+      label: "Assigned To",
+      key: "assignedTo.name",
+      responsive: "lg:table-cell",
+    },
   ];
 
-  // ✅ Status pill badges
+  /* Status Section */
   const getStatusBadge = (status) => {
     switch (status) {
       case "Pending":
@@ -124,7 +143,7 @@ export default function Tasks() {
       case "Completed":
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-            <CheckCircle size={14} /> Completed
+            <CheckCheck size={14} /> Completed
           </span>
         );
       default:
@@ -132,7 +151,7 @@ export default function Tasks() {
     }
   };
 
-  // ✅ Priority pill badges
+  /* Priority Section */
   const getPriorityBadge = (priority) => {
     switch (priority) {
       case "High":
@@ -209,23 +228,51 @@ export default function Tasks() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-20 pt-14">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <ClipboardCheck size={28} className="text-blue-600" />
-          Tasks
-        </h1>
-        {isAdmin() && (
-          <Link
-            to="/tasks/new"
-            className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
-          >
-            <Plus size={18} /> Add Task
-          </Link>
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <Skeleton className="w-8 h-8 rounded-full" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+        ) : (
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <ClipboardCheck size={28} className="text-blue-600" />
+            Tasks
+          </h1>
+        )}
+        {loading ? (
+          <Skeleton className="h-10 w-32 rounded-full" />
+        ) : (
+          isAdmin() && (
+            <Link
+              to="/tasks/new"
+              className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-4 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
+            >
+              <Plus size={18} /> Add Task
+            </Link>
+          )
         )}
       </div>
 
+      {/* List */}
       <GlassCard className="p-0">
-        {tasks.length === 0 ? (
+        {loading ? (
+          <div className="p-6">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 mb-4 last:mb-0 animate-pulse"
+              >
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-24 hidden md:block" />
+                <Skeleton className="h-5 w-20 hidden lg:block" />
+                <Skeleton className="h-5 w-20 hidden lg:block" />
+                <Skeleton className="h-5 w-28 hidden lg:block" />
+              </div>
+            ))}
+          </div>
+        ) : sortedTasks.length === 0 ? (
           <p className="p-8 text-center text-gray-600 italic">
             No tasks found. Click "Add Task" to get started.
           </p>
@@ -236,6 +283,7 @@ export default function Tasks() {
             sortState={sortState}
             onSort={handleSort}
             renderRow={renderRow}
+            hasActions={isAdmin() || isSales()}
           />
         )}
       </GlassCard>
