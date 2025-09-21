@@ -14,7 +14,7 @@ import {
   CircleHelp,
   Sparkles,
   PhoneCall,
-  CheckCircle,
+  CheckCheck,
   TrendingUp,
   XCircle,
 } from "lucide-react";
@@ -146,7 +146,7 @@ export default function Leads() {
       case "Qualified":
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
-            <CheckCircle size={14} /> Qualified
+            <CheckCheck size={14} /> Qualified
           </span>
         );
       case "Converted":
@@ -245,7 +245,12 @@ export default function Leads() {
       </div>
 
       {/* Filters */}
-      {!loading && (
+      {loading ? (
+        <div className="flex flex-wrap gap-4 mb-6">
+          <Skeleton className="h-10 w-40 rounded-full" />
+          <Skeleton className="h-10 w-40 rounded-full" />
+        </div>
+      ) : (
         <div className="flex flex-wrap gap-4 mb-6">
           <select
             value={statusFilter}
