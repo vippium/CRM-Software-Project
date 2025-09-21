@@ -32,7 +32,6 @@ export default function Leads() {
   const [sortState, setSortState] = useState({ key: null, direction: null });
   const [statusFilter, setStatusFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
-  const [reps, setReps] = useState([]);
 
   const fetchLeads = async () => {
     try {
@@ -45,18 +44,8 @@ export default function Leads() {
     }
   };
 
-  const fetchReps = async () => {
-    try {
-      const { data } = await API.get("/users");
-      setReps(data.filter((u) => u.role === "sales"));
-    } catch (err) {
-      console.error("Error fetching reps", err);
-    }
-  };
-
   useEffect(() => {
     fetchLeads();
-    if (isAdmin()) fetchReps();
   }, []);
 
   const handleSort = (key) => {
@@ -72,14 +61,11 @@ export default function Leads() {
   };
 
   const getSortedLeads = () => {
-    if (!sortState.key || !sortState.direction) {
-      return leads;
-    }
+    if (!sortState.key || !sortState.direction) return leads;
 
     const sorted = [...leads].sort((a, b) => {
       const aValue = a[sortState.key] || "";
       const bValue = b[sortState.key] || "";
-
       if (aValue === bValue) return 0;
       const compareResult = aValue.toString().localeCompare(bValue.toString());
       return sortState.direction === "asc" ? compareResult : -compareResult;
@@ -193,31 +179,7 @@ export default function Leads() {
       <td className="p-4 hidden lg:table-cell">{getSourceBadge(l.source)}</td>
       <td className="p-4 hidden lg:table-cell">{getStatusBadge(l.status)}</td>
       <td className="p-4 hidden lg:table-cell">
-        {isAdmin() ? (
-          <select
-            value={l.assignedRep?._id || ""}
-            onChange={async (e) => {
-              try {
-                await API.put(`/leads/${l._id}`, {
-                  assignedRep: e.target.value,
-                });
-                fetchLeads();
-              } catch (err) {
-                console.error("Error assigning rep", err);
-              }
-            }}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
-          >
-            <option value="">Unassigned</option>
-            {reps.map((rep) => (
-              <option key={rep._id} value={rep._id}>
-                {rep.name}
-              </option>
-            ))}
-          </select>
-        ) : (
-          l.assignedRep?.name || "Unassigned"
-        )}
+        {l.assignedRep?.name || "Unassigned"}
       </td>
       {(isAdmin() || isSales()) && (
         <td className="p-4 text-center">
@@ -244,7 +206,7 @@ export default function Leads() {
     </tr>
   );
 
-  // filters
+  // Filters
   const sortedLeads = getSortedLeads();
   const filteredLeads = sortedLeads.filter((l) => {
     return (
@@ -288,8 +250,7 @@ export default function Leads() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 rounded-full border border-gray-400 bg-white shadow-sm 
-                 text-gray-700 focus:outline-none transition duration-200"
+            className="px-4 py-2 rounded-full border border-gray-400 bg-white shadow-sm text-gray-700 focus:outline-none transition duration-200"
           >
             <option value="">All Statuses</option>
             <option value="New">New</option>
@@ -302,8 +263,7 @@ export default function Leads() {
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
-            className="px-4 py-2 rounded-full border border-gray-400 bg-white shadow-sm 
-                 text-gray-700 focus:outline-none transition duration-200"
+            className="px-4 py-2 rounded-full border border-gray-400 bg-white shadow-sm text-gray-700 focus:outline-none transition duration-200"
           >
             <option value="">All Sources</option>
             <option value="Website">Website</option>
