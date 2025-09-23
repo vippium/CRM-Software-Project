@@ -105,7 +105,7 @@ export default function Sales() {
     },
   ];
 
-  // ✅ Status pill badges
+  // Status pill badges
   const renderStatusPill = (status) => {
     const pill =
       "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium";

@@ -26,6 +26,7 @@ import { Pie, Bar } from "react-chartjs-2";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import toast from "react-hot-toast";
 
 ChartJS.register(
   Title,
@@ -88,6 +89,26 @@ const ChartSkeleton = () => (
   </div>
 );
 
+const HeaderSkeleton = () => (
+  <div className="flex justify-between items-center mb-12">
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse" />
+      <div className="h-8 w-40 bg-gray-200 rounded animate-pulse" />
+    </div>
+    <div className="flex flex-col items-end gap-2">
+      <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+      <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+    </div>
+  </div>
+);
+
+const SectionTitleSkeleton = () => (
+  <div className="flex items-center justify-center gap-4 mb-6 py-8">
+    <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+    <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
+  </div>
+);
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const dashboardRef = useRef();
@@ -116,6 +137,7 @@ export default function Dashboard() {
       setSales(sRes.data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load dashboard data");
       localStorage.clear();
       navigate("/");
     } finally {
@@ -132,7 +154,9 @@ export default function Dashboard() {
   if (loading)
     return (
       <div className="p-16 space-y-12">
+        <HeaderSkeleton />
         <StatsSkeleton />
+        <SectionTitleSkeleton />
         <div className="px-24 grid grid-cols-1 lg:grid-cols-2 gap-12">
           <ChartSkeleton />
           <ChartSkeleton />
@@ -283,7 +307,6 @@ export default function Dashboard() {
     ],
   };
 
-  // 🔹 Export handlers
   const csvData = [
     ["Type", "Name", "Status", "Amount/ID"],
     ...filteredCustomers.map((c) => ["Customer", c.name, "-", c._id]),
@@ -299,14 +322,19 @@ export default function Dashboard() {
 
   const handlePDFExport = async () => {
     if (!dashboardRef.current) return;
-    const canvas = await html2canvas(dashboardRef.current, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save("dashboard-report.pdf");
+    try {
+      const canvas = await html2canvas(dashboardRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("dashboard-report.pdf");
+      toast.success("Dashboard exported as PDF");
+    } catch (err) {
+      toast.error("Failed to export PDF");
+    }
   };
 
   return (
@@ -438,6 +466,7 @@ export default function Dashboard() {
             data={csvData}
             filename="dashboard-report.csv"
             className="text-blue-600 font-medium"
+            onClick={() => toast.success("Dashboard exported as CSV 📊")}
           >
             CSV
           </CSVLink>{" "}

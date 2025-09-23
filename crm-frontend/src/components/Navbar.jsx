@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { LogOut, Menu, X, Rocket } from "lucide-react";
 import GlassNavbar from "./GlassNavbar.jsx";
+import NotificationBell from "./NotificationBell.jsx";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -58,8 +59,10 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* User + Logout (Desktop) */}
+        {/* User + Notification Bell + Logout (Desktop) */}
         <div className="hidden md:flex items-center gap-5">
+          <NotificationBell />
+
           {user && (
             <span className="text-lg text-gray-700 font-semibold">
               {user.name}

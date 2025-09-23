@@ -7,11 +7,15 @@ import {
     createTask,
     updateTask,
     deleteTask,
+    getUnseenTasks,
+    markTaskAsSeen,
 } from "../controllers/taskController.js";
 
 const router = express.Router();
 
 router.get("/", auth, getAllTasks);
+router.get("/unseen", auth, roleCheck(["sales"]), getUnseenTasks);
+router.patch("/:id/seen", auth, roleCheck(["sales"]), markTaskAsSeen);
 router.get("/:id", auth, getTaskById);
 router.post("/", auth, roleCheck(["admin"]), createTask);
 router.put("/:id", auth, roleCheck(["admin", "sales"]), updateTask);

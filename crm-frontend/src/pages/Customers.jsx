@@ -5,6 +5,7 @@ import API from "../services/api.js";
 import { Trash2, UserPlus, ClipboardList, Edit } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
 import { isAdmin, isSales } from "../services/auth.js";
+import { toast } from "react-hot-toast";
 
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -18,6 +19,7 @@ export default function Customers() {
       setCustomers(data);
     } catch (err) {
       console.error("Error fetching customers", err);
+      toast.error("Failed to fetch customers");
     } finally {
       setLoading(false);
     }
@@ -30,9 +32,11 @@ export default function Customers() {
   const handleDelete = async (id) => {
     try {
       await API.delete(`/customers/${id}`);
+      toast.success("Customer deleted");
       fetchCustomers();
     } catch (err) {
       console.error("Error deleting customer", err);
+      toast.error("Failed to delete customer");
     }
   };
 
@@ -52,7 +56,6 @@ export default function Customers() {
     if (!sortState.key || !sortState.direction) return customers;
 
     const sorted = [...customers].sort((a, b) => {
-      // Support nested keys like "assignedRep.name" gracefully if needed
       const getValue = (obj, key) => {
         if (!key) return "";
         if (key.includes(".")) {
@@ -126,12 +129,12 @@ export default function Customers() {
     </tr>
   );
 
-  // ---------- Skeleton UI pieces ----------
+  /* ---------- Skeleton UI ---------- */
   const HeaderSkeleton = () => (
     <div className="flex justify-between items-center mb-8">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-gray-200 rounded animate-pulse" />
-        <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+        <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
+        <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
       </div>
       <div className="h-10 w-36 bg-gray-200 rounded-full animate-pulse" />
     </div>
@@ -161,8 +164,8 @@ export default function Customers() {
                     <div className="h-4 bg-gray-200 rounded w-40 animate-pulse" />
                   </td>
                   {(isAdmin() || isSales()) && (
-                    <td className="p-4">
-                      <div className="h-6 w-20 bg-gray-200 rounded animate-pulse mx-auto" />
+                    <td className="p-4 text-center">
+                      <div className="h-6 w-6 bg-gray-200 rounded animate-pulse mx-auto" />
                     </td>
                   )}
                 </tr>
@@ -174,7 +177,6 @@ export default function Customers() {
     </GlassCard>
   );
 
-  // ---------- Render ----------
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 p-20 pt-14">
       {/* Header */}
@@ -194,13 +196,12 @@ export default function Customers() {
               <UserPlus size={18} /> Add Customer
             </Link>
           ) : (
-            // keep layout stable for non-admin users
             <div className="w-36" />
           )}
         </div>
       )}
 
-      {/* List / Table area */}
+      {/* List / Table */}
       {loading ? (
         <TableSkeleton rows={6} />
       ) : customers.length === 0 ? (

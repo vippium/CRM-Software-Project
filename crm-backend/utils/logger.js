@@ -1,3 +1,4 @@
+/*
 const chalk = require("chalk");
 const emoji = require("node-emoji");
 
@@ -13,3 +14,5 @@ const log = {
 };
 
 module.exports = log;
+
+*/

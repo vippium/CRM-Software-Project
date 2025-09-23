@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
 import { isAdmin, isSales } from "../services/auth.js";
+import { toast } from "react-hot-toast";
 
 // 🔹 Simple Skeleton Component
 const Skeleton = ({ className }) => (
@@ -39,6 +40,7 @@ export default function Leads() {
       setLeads(data);
     } catch (err) {
       console.error("Error fetching leads", err);
+      toast.error("Failed to fetch leads");
     } finally {
       setLoading(false);
     }
@@ -77,9 +79,11 @@ export default function Leads() {
   const handleDelete = async (id) => {
     try {
       await API.delete(`/leads/${id}`);
+      toast.success("Lead deleted");
       fetchLeads();
     } catch (err) {
-      console.error("Error deleting lead", err);
+      console.error("Error deleting lead.", err);
+      toast.error("Failed to delete lead.");
     }
   };
 
@@ -92,7 +96,7 @@ export default function Leads() {
     { label: "Assigned Rep", key: "assignedRep", responsive: "lg:table-cell" },
   ];
 
-  // ✅ Source pill badges
+  // Source pill badges
   const getSourceBadge = (source) => {
     switch (source) {
       case "Website":
@@ -128,7 +132,7 @@ export default function Leads() {
     }
   };
 
-  // ✅ Status pill badges
+  // Status pill badges
   const getStatusBadge = (status) => {
     switch (status) {
       case "New":

@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -15,16 +16,33 @@ import SaleForm from "./pages/form_pages/SaleForm.jsx";
 export default function App() {
   const location = useLocation();
 
-  // Pages where we don’t want Navbar (like Login/Register)
   const hideNavbar = ["/", "/register"].includes(location.pathname);
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#fff",
+            color: "#333",
+            fontSize: "14px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          },
+          success: { iconTheme: { primary: "#10B981", secondary: "#fff" } },
+          error: { iconTheme: { primary: "#EF4444", secondary: "#fff" } },
+        }}
+      />
+
       {!hideNavbar && <Navbar />}
+
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
+
         {/* CRUD pages */}
         <Route path="/customers" element={<Customers />} />
         <Route path="/customers/new" element={<CustomerForm />} />
