@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { LogOut, Menu, X, Rocket } from "lucide-react";
 import GlassNavbar from "./GlassNavbar.jsx";
 import NotificationBell from "./NotificationBell.jsx";
+import logo from "../assets/crm_logo.png";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -34,9 +35,9 @@ export default function Navbar() {
       {/* Glass Navbar */}
       <GlassNavbar>
         {/* Logo */}
-        <div className="flex items-center gap-2 font-bold text-xl tracking-wide text-gray-800">
-          <Rocket size={24} className="text-blue-600" />
-          <span className="text-slate-800">Vippium Core</span>
+        <div className="flex items-center gap-2 font-bold text-2xl tracking-wide text-gray-800">
+          <img src={logo} alt="Logo" className="w-14 h-14" />
+          <span className="text-slate-800">Vipin's CRM System</span>
         </div>
 
         {/* Desktop Links */}
