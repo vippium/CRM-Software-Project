@@ -12,52 +12,13 @@ import {
 import API from "../services/api.js";
 import { useNavigate } from "react-router-dom";
 import GlassCard from "../components/GlassCard.jsx";
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-} from "chart.js";
-import { Pie, Bar } from "react-chartjs-2";
+import Chart from "react-apexcharts";
 import { CSVLink } from "react-csv";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import toast from "react-hot-toast";
 
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement
-);
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { labels: { color: "#4B5563" } },
-    tooltip: {
-      backgroundColor: "rgba(255, 255, 255, 0.9)",
-      titleColor: "#111827",
-      bodyColor: "#374151",
-      borderColor: "#E5E7EB",
-      borderWidth: 1,
-    },
-  },
-  scales: {
-    x: { ticks: { color: "#6B7280" }, grid: { color: "#E5E7EB" } },
-    y: { ticks: { color: "#6B7280" }, grid: { color: "#E5E7EB" } },
-  },
-};
-
-// 🔹 Helper to calculate MoM change safely
+// 🔹 MoM Change Helper
 const calculateMoMChange = (current, previous) => {
   if (!previous || previous === 0) return null;
   return ((current - previous) / previous) * 100;
@@ -182,7 +143,7 @@ export default function Dashboard() {
     ? sales
     : sales.filter((s) => s.assignedRep?._id === user._id);
 
-  // 🔹 MoM calculations
+  // 🔹 MoM stats
   const currentMonth = new Date().getMonth();
   const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
 
@@ -234,42 +195,40 @@ export default function Dashboard() {
     },
   ];
 
-  // 🔹 Chart data
-  const generateStatusData = (items, colors) => {
+  // 🔹 ApexCharts data
+  const getStatusChart = (items) => {
     const counts = items.reduce((acc, item) => {
       acc[item.status] = (acc[item.status] || 0) + 1;
       return acc;
     }, {});
     return {
-      labels: Object.keys(counts),
-      datasets: [
-        {
-          data: Object.values(counts),
-          backgroundColor: colors,
-          borderColor: "rgba(255,255,255,0.1)",
+      series: Object.values(counts),
+      options: {
+        chart: {
+          type: "donut",
+          animations: { enabled: true, easing: "easeinout", speed: 800 },
         },
-      ],
+        labels: Object.keys(counts),
+        legend: { position: "bottom", labels: { colors: "#374151" } },
+        colors: ["#facc15", "#3b82f6", "#22c55e", "#ef4444"],
+        plotOptions: {
+          pie: { donut: { size: "70%" } },
+        },
+        dataLabels: { enabled: true, style: { colors: ["#111827"] } },
+        theme: { mode: "light" },
+        tooltip: {
+          theme: "light",
+          style: { fontSize: "14px" },
+        },
+      },
     };
   };
 
-  const salesStatusData = generateStatusData(filteredSales, [
-    "#facc15",
-    "#3b82f6",
-    "#22c55e",
-    "#ef4444",
-  ]);
-  const leadStatusData = generateStatusData(filteredLeads, [
-    "#3b82f6",
-    "#22c55e",
-    "#f59e0b",
-    "#ef4444",
-  ]);
-  const taskStatusData = generateStatusData(filteredTasks, [
-    "#facc15",
-    "#3b82f6",
-    "#22c55e",
-  ]);
+  const salesStatusChart = getStatusChart(filteredSales);
+  const leadStatusChart = getStatusChart(filteredLeads);
+  const taskStatusChart = getStatusChart(filteredTasks);
 
+  // Monthly sales
   const monthlySales = filteredSales.reduce((acc, s) => {
     const month = new Date(s.date).toLocaleString("default", {
       month: "short",
@@ -294,19 +253,35 @@ export default function Dashboard() {
   const sortedMonths = Object.keys(monthlySales).sort(
     (a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b)
   );
-  const monthlySalesData = {
-    labels: sortedMonths,
-    datasets: [
+  const monthlySalesChart = {
+    series: [
       {
-        label: "Sales Amount",
+        name: "Sales",
         data: sortedMonths.map((m) => monthlySales[m]),
-        backgroundColor: "#3b82f6",
-        borderColor: "#3b82f6",
-        borderWidth: 1,
       },
     ],
+    options: {
+      chart: {
+        type: "bar",
+        animations: { enabled: true, easing: "easeout", speed: 1000 },
+      },
+      xaxis: {
+        categories: sortedMonths,
+        labels: { style: { colors: "#374151" } },
+      },
+      yaxis: { labels: { style: { colors: "#374151" } } },
+      colors: ["#3b82f6"],
+      theme: { mode: "light" },
+      dataLabels: { enabled: false },
+      grid: { borderColor: "#E5E7EB" },
+      tooltip: {
+        theme: "light",
+        style: { fontSize: "14px" },
+      },
+    },
   };
 
+  // Export CSV/PDF
   const csvData = [
     ["Type", "Name", "Status", "Amount/ID"],
     ...filteredCustomers.map((c) => ["Customer", c.name, "-", c._id]),
@@ -332,7 +307,7 @@ export default function Dashboard() {
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save("dashboard-report.pdf");
       toast.success("Dashboard exported as PDF");
-    } catch (err) {
+    } catch {
       toast.error("Failed to export PDF");
     }
   };
@@ -358,7 +333,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Stats Section with MoM Highlights */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {stats.map((stat, i) => (
           <GlassCard key={i} className="p-6 flex items-center gap-6">
@@ -371,9 +346,7 @@ export default function Dashboard() {
                 {stat.value}
               </h2>
               {stat.change === null ? (
-                <p className="text-sm text-gray-400 mt-1">
-                  ◕ No comparison available
-                </p>
+                <p className="text-sm text-gray-400 mt-1">◕ No comparison</p>
               ) : (
                 <p
                   className={`text-sm font-medium mt-1 ${
@@ -406,9 +379,14 @@ export default function Dashboard() {
           </div>
           <div className="flex-1">
             {filteredSales.length ? (
-              <Pie data={salesStatusData} options={chartOptions} />
+              <Chart
+                options={salesStatusChart.options}
+                series={salesStatusChart.series}
+                type="donut"
+                height="100%"
+              />
             ) : (
-              <p>No sales data available</p>
+              <p>No sales data</p>
             )}
           </div>
         </GlassCard>
@@ -421,9 +399,14 @@ export default function Dashboard() {
             </div>
             <div className="flex-1">
               {filteredSales.length ? (
-                <Bar data={monthlySalesData} options={chartOptions} />
+                <Chart
+                  options={monthlySalesChart.options}
+                  series={monthlySalesChart.series}
+                  type="bar"
+                  height="100%"
+                />
               ) : (
-                <p>No sales data available</p>
+                <p>No sales data</p>
               )}
             </div>
           </GlassCard>
@@ -436,9 +419,14 @@ export default function Dashboard() {
           </div>
           <div className="flex-1">
             {filteredLeads.length ? (
-              <Pie data={leadStatusData} options={chartOptions} />
+              <Chart
+                options={leadStatusChart.options}
+                series={leadStatusChart.series}
+                type="donut"
+                height="100%"
+              />
             ) : (
-              <p>No leads data available</p>
+              <p>No leads data</p>
             )}
           </div>
         </GlassCard>
@@ -450,9 +438,14 @@ export default function Dashboard() {
           </div>
           <div className="flex-1">
             {filteredTasks.length ? (
-              <Pie data={taskStatusData} options={chartOptions} />
+              <Chart
+                options={taskStatusChart.options}
+                series={taskStatusChart.series}
+                type="donut"
+                height="100%"
+              />
             ) : (
-              <p>No tasks data available</p>
+              <p>No tasks data</p>
             )}
           </div>
         </GlassCard>
@@ -461,12 +454,12 @@ export default function Dashboard() {
       {/* Footer */}
       <div className="mt-12 text-center text-gray-700 text-lg space-y-2">
         <p>
-          You can download the complete analytics report in{" "}
+          You can download the report in{" "}
           <CSVLink
             data={csvData}
             filename="dashboard-report.csv"
             className="text-blue-600 font-medium"
-            onClick={() => toast.success("Dashboard exported as CSV 📊")}
+            onClick={() => toast.success("CSV exported 📊")}
           >
             CSV
           </CSVLink>{" "}
@@ -476,8 +469,7 @@ export default function Dashboard() {
             className="text-blue-600 font-medium"
           >
             PDF
-          </button>{" "}
-          format for your records.
+          </button>
         </p>
         <p className="text-gray-500 text-sm">
           Last Updated:{" "}
