@@ -26,11 +26,11 @@
 ## 🛠️ Getting Started
 
 ### 📋 Prerequisites  
-Make sure you have the following installed on your system:  
-- **Node.js** (v18+ recommended)  
-- **MongoDB Account** 
-- **Java JDK** (v17+ recommended)  
-- **Maven** (for Spring Boot build & run)  
+Make sure you have the following installed on your system with latest version:  
+- **Node.js**
+- **MongoDB Account**
+- **Java JDK** 
+- **Maven** 
 - **Git** (for cloning the repository)
 
 ### 1️⃣ Clone the Repository  
