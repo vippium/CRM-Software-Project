@@ -90,5 +90,4 @@ I've used these platforms and libraries in my project:
 
 ## 🎗 License  
 
-This project is protected under the [MIT](https://choosealicense.com/licenses/mit/) License.  
-For more details, refer to the [LICENSE](./LICENSE) file.  
+This project is protected under the [MIT](https://choosealicense.com/licenses/mit/) License. For more details, refer to the [LICENSE]([./LICENSE](https://github.com/vippium/CRM-Software-Project/blob/master/LICENSE.md)) file.  
