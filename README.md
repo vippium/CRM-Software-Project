@@ -21,6 +21,75 @@
 ## 📁 Project Structure
 
 ```sh
+
+└── vippium-crm-software-project/
+    ├── crm-backend/
+    │   ├── index.js
+    │   ├── package.json
+    │   ├── .env.local
+    │   ├── controllers/
+    │   │   ├── authController.js
+    │   │   ├── customerController.js
+    │   │   ├── leadController.js
+    │   │   ├── notificationController.js
+    │   │   ├── saleController.js
+    │   │   ├── taskController.js
+    │   │   └── userController.js
+    │   ├── middleware/
+    │   │   ├── auth.js
+    │   │   └── roleCheck.js
+    │   ├── models/
+    │   │   ├── Customer.js
+    │   │   ├── Lead.js
+    │   │   ├── Notification.js
+    │   │   ├── Sale.js
+    │   │   ├── Task.js
+    │   │   └── User.js
+    │   ├── routes/
+    │   │   ├── auth.js
+    │   │   ├── customers.js
+    │   │   ├── leads.js
+    │   │   ├── notifications.js
+    │   │   ├── sales.js
+    │   │   ├── tasks.js
+    │   │   └── users.js
+    │   └── utils/
+    │       └── logger.js
+    └── crm-frontend/
+        ├── index.html
+        └── src/
+            ├── App.jsx
+            ├── index.css
+            ├── main.jsx
+            ├── components/
+            │   ├── DataTable.jsx
+            │   ├── FormInput.jsx
+            │   ├── FormSelect.jsx
+            │   ├── FormTextarea.jsx
+            │   ├── GlassCard.jsx
+            │   ├── GlassNavbar.jsx
+            │   ├── Navbar.jsx
+            │   ├── NotificationBell.jsx
+            │   └── NotificationContext.jsx
+            ├── pages/
+            │   ├── Customers.jsx
+            │   ├── Dashboard.jsx
+            │   ├── Leads.jsx
+            │   ├── Login.jsx
+            │   ├── Register.jsx
+            │   ├── Reports.jsx
+            │   ├── Sales.jsx
+            │   ├── Tasks.jsx
+            │   └── form_pages/
+            │       ├── CustomerForm.jsx
+            │       ├── LeadForm.jsx
+            │       ├── SaleForm.jsx
+            │       └── TaskForm.jsx
+            └── services/
+                ├── api.js
+                ├── auth.js
+                └── notifications.js
+
 ```
 
 ## 🛠️ Getting Started
