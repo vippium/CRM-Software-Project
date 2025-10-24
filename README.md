@@ -1,4 +1,4 @@
-![CRM-Software-Project](https://deploy-preview-697--github-socialify.netlify.app/vippium/CRM-Software-Project/image?custom_language=Vite&description=1&font=Jost&language=1&name=1&pattern=Transparent&theme=Auto)
+![CRM-Software-Project](https://socialify.git.ci/vippium/CRM-Software-Project/image?custom_language=Vite&description=1&font=Jost&language=1&name=1&pattern=Transparent&theme=Auto)
 
 <!-- ![CRM-Software-Project](https://socialify.git.ci/vippium/CRM-Software-Project/image?custom_description=&amp&custom_language=React&description=1&font=Jost&language=1&name=1&pattern=Transparent&theme=Auto). -->
 
