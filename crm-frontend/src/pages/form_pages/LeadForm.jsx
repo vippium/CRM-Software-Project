@@ -12,12 +12,14 @@ export default function LeadForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const isSalesEditing = isSales() && isEditing;
 
   const [form, setForm] = useState({
     name: "",
     contactInfo: { email: "", phone: "" },
     source: "",
     status: "New",
+    priority: "Medium",
     assignedRep: "",
     notes: "",
   });
@@ -56,17 +58,14 @@ export default function LeadForm() {
             assignedRep: res.data.assignedRep?._id || "",
           });
         })
-        .catch((err) => {
-          console.error("Error fetching lead for edit", err);
-          navigate("/leads");
-        });
+        .catch(() => navigate("/leads"));
     }
   }, [id, isEditing, navigate]);
 
   useEffect(() => {
     API.get("/users/sales-reps")
       .then((res) => setSalesReps(res.data))
-      .catch((err) => console.error("Error fetching sales reps", err));
+      .catch(() => {});
   }, []);
 
   const handleChange = (e) => {
@@ -88,8 +87,8 @@ export default function LeadForm() {
         await API.post("/leads", form);
       }
       navigate("/leads");
-    } catch (err) {
-      console.error("Error saving lead", err);
+    } catch {
+      console.error("Error saving lead");
     }
   };
 
@@ -106,6 +105,16 @@ export default function LeadForm() {
     { value: "Qualified", label: "Qualified" },
     { value: "Lost", label: "Lost" },
   ];
+
+  const priorityOptions = [
+    { value: "Low", label: "Low" },
+    { value: "Medium", label: "Medium" },
+    { value: "High", label: "High" },
+  ];
+
+  // Tailwind disabled effect (greyed out + no clicks)
+  const disabledStyle =
+    "opacity-60 cursor-not-allowed bg-gray-100 pointer-events-none select-none";
 
   return (
     <div className="fixed inset-0 overflow-hidden flex items-start justify-center p-8 pt-28 bg-gray-50 text-gray-800">
@@ -128,26 +137,38 @@ export default function LeadForm() {
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-3"
         >
-          <FormInput
-            label="Name *"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-          <FormInput
-            label="Email"
-            type="email"
-            name="email"
-            value={form.contactInfo.email}
-            onChange={handleChange}
-          />
-          <FormInput
-            label="Phone"
-            name="phone"
-            value={form.contactInfo.phone}
-            onChange={handleChange}
-          />
+          {/* Non-editable for Sales */}
+          <div className={isSalesEditing ? disabledStyle : ""}>
+            <FormInput
+              label="Name *"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              disabled={isSalesEditing}
+            />
+          </div>
+          <div className={isSalesEditing ? disabledStyle : ""}>
+            <FormInput
+              label="Email"
+              type="email"
+              name="email"
+              value={form.contactInfo.email}
+              onChange={handleChange}
+              disabled={isSalesEditing}
+            />
+          </div>
+          <div className={isSalesEditing ? disabledStyle : ""}>
+            <FormInput
+              label="Phone"
+              name="phone"
+              value={form.contactInfo.phone}
+              onChange={handleChange}
+              disabled={isSalesEditing}
+            />
+          </div>
+
+          {/* Editable Fields for Sales */}
           <FormSelect
             label="Source"
             name="source"
@@ -162,28 +183,45 @@ export default function LeadForm() {
             onChange={handleChange}
             options={statusOptions}
           />
-
-          {/* Assigned Rep Dropdown */}
           <FormSelect
-            label="Assigned Rep"
-            name="assignedRep"
-            value={form.assignedRep}
+            label="Priority"
+            name="priority"
+            value={form.priority}
             onChange={handleChange}
-            options={[
-              { value: "", label: "Select a rep" },
-              ...salesReps.map((rep) => ({
-                value: rep._id,
-                label: `${rep.name} (${rep.email})`,
-              })),
-            ]}
+            options={priorityOptions}
           />
-          <FormTextarea
-            label="Notes"
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-          />
-          {(isAdmin() || (isSales() && isEditing)) && (
+
+          {/* Non-editable for Sales */}
+          <div className={isSalesEditing ? disabledStyle : ""}>
+            <FormSelect
+              label="Assigned Rep"
+              name="assignedRep"
+              value={form.assignedRep}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "Select a rep" },
+                ...salesReps.map((rep) => ({
+                  value: rep._id,
+                  label: `${rep.name} (${rep.email})`,
+                })),
+              ]}
+              disabled={isSalesEditing}
+            />
+          </div>
+
+          <div
+            className={`md:col-span-2 ${isSalesEditing ? disabledStyle : ""}`}
+          >
+            <FormTextarea
+              label="Notes"
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              disabled={isSalesEditing}
+            />
+          </div>
+
+          {(isAdmin() || isSalesEditing) && (
             <button
               type="submit"
               className={`md:col-span-2 flex items-center justify-center gap-2 ${
