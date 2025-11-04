@@ -49,10 +49,32 @@ export const createLead = async (req, res) => {
 
 export const updateLead = async (req, res) => {
   try {
+    if (req.user.role === "sales") {
+      const allowedFields = ["status", "source", "priority"];
+      const filteredBody = {};
+
+      for (const key of allowedFields) {
+        if (req.body[key] !== undefined) {
+          filteredBody[key] = req.body[key];
+        }
+      }
+
+      req.body = filteredBody;
+    }
+
     const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-    });
+    }).populate("assignedRep", "name email role");
+
     if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    if (
+      req.user.role === "sales" &&
+      lead.assignedRep?._id.toString() !== req.user.id
+    ) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     res.json(lead);
   } catch (err) {
     res.status(400).json({ message: err.message });
