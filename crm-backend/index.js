@@ -11,6 +11,7 @@ import leadRoutes from "./routes/leads.js";
 import taskRoutes from "./routes/tasks.js";
 import salesRoutes from "./routes/sales.js";
 import notificationRoutes from "./routes/notifications.js";
+import { swaggerUi, swaggerSpec } from "./swagger.js";
 
 dotenv.config();
 
@@ -18,11 +19,11 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: true,
-    },
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  },
 });
 
 // Make socket.io available everywhere
@@ -30,21 +31,21 @@ app.set("io", io);
 
 app.use(express.json());
 app.use(
-    cors({
-        origin: "http://localhost:5173",
-        credentials: true,
-    })
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
 );
 
 // DB connection
 async function connectDB() {
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log("✅ MongoDB connected");
-    } catch (err) {
-        console.error("❌ MongoDB connection error:", err.message);
-        process.exit(1);
-    }
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB connected");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
+  }
 }
 connectDB();
 
@@ -58,13 +59,17 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+// Swagger Docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+console.log("📘 Swagger Docs available at http://localhost:5000/api-docs");
+
 // Socket.IO
 io.on("connection", (socket) => {
-    socket.on("registerUser", (userId) => {
-        socket.join(userId);
-    });
+  socket.on("registerUser", (userId) => {
+    socket.join(userId);
+  });
 
-    socket.on("disconnect", () => {});
+  socket.on("disconnect", () => {});
 });
 
 // Server start
