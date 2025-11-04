@@ -141,6 +141,21 @@ npm install
 npm run dev
 ```
 ---
+## 📘 API Documentation (Swagger)
+The backend provides a fully interactive Swagger UI for testing and exploring all CRM API endpoints.
+This includes routes for authentication, users, customers, leads, tasks, sales, and notifications — all protected with JWT authorization.
+
+### 🌐 Local Swagger Access
+After running the backend, open your browser and go to: http://localhost:5000/api-docs
+
+Here you can:
+
+- View all available endpoints grouped by module
+- Test secured routes by entering your JWT token
+- See example request & response bodies for each API
+- Automatically generate cURL and Postman snippets
+
+---
 
 ## 🗺️ Project Roadmap  
 
