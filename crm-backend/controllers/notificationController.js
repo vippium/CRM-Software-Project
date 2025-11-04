@@ -9,7 +9,9 @@ export const getNotifications = async(req, res) => {
 
         res.json(notifications);
     } catch (err) {
-        res.status(500).json({ message: "Error fetching notifications", error: err });
+        res
+            .status(500)
+            .json({ message: "Error fetching notifications", error: err.message });
     }
 };
 
@@ -22,9 +24,16 @@ export const markAsSeen = async(req, res) => {
             return res.status(404).json({ message: "Notification not found" });
         }
 
+        req.app
+            .get("io")
+            .to(req.user.id.toString())
+            .emit("newNotification", notification);
+
         res.json(notification);
     } catch (err) {
-        res.status(500).json({ message: "Error updating notification", error: err });
+        res
+            .status(500)
+            .json({ message: "Error updating notification", error: err.message });
     }
 };
 
@@ -33,8 +42,16 @@ export const markAllAsSeen = async(req, res) => {
     try {
         await Notification.updateMany({ userId: req.user.id, seen: false }, { $set: { seen: true } });
 
+        const updated = await Notification.find({ userId: req.user.id }).sort({
+            createdAt: -1,
+        });
+
+        req.app.get("io").to(req.user.id.toString()).emit("allNotificationsUpdated", updated);
+
         res.json({ message: "All notifications marked as seen" });
     } catch (err) {
-        res.status(500).json({ message: "Error updating notifications", error: err });
+        res
+            .status(500)
+            .json({ message: "Error updating notifications", error: err.message });
     }
 };

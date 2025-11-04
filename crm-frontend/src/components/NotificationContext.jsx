@@ -4,8 +4,10 @@ import {
   markNotificationAsSeen,
   markAllAsSeen,
 } from "../services/notifications.js";
+import { io } from "socket.io-client";
 
 const NotificationContext = createContext();
+let socket;
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -49,15 +51,33 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  // Auto-fetch on mount
+  // 📡 Setup socket connection
   useEffect(() => {
-    fetchNotifications();
+    // ✅ Connect socket
+    socket = io("http://localhost:5000", { withCredentials: true });
+
+    // ✅ Register user to their room
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const { _id } = JSON.parse(storedUser);
+      if (_id) {
+        socket.emit("registerUser", _id);
+      }
+    }
+
+    // ✅ Listen for new notifications
+    socket.on("newNotification", (newNotification) => {
+      setNotifications((prev) => [newNotification, ...prev]);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
-  // Optionally auto-refresh every 30s
+  // Initial fetch
   useEffect(() => {
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    fetchNotifications();
   }, []);
 
   return (

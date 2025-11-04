@@ -8,7 +8,7 @@ import {
   Target,
   Edit,
   Globe,
-  Mail,
+  Megaphone,
   Phone,
   Users,
   CircleHelp,
@@ -99,34 +99,23 @@ export default function Leads() {
   // Source pill badges
   const getSourceBadge = (source) => {
     switch (source) {
-      case "Website":
+      case "Web":
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
-            <Globe size={14} /> Website
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-pink-100 text-pink-700">
+            <Globe size={14} /> Web
           </span>
         );
-      case "Email":
+      case "Ads":
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
-            <Mail size={14} /> Email
+            <Megaphone size={14} /> Ads
           </span>
         );
-      case "Phone":
-        return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
-            <Phone size={14} /> Phone
-          </span>
-        );
+
       case "Referral":
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700">
             <Users size={14} /> Referral
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
-            <CircleHelp size={14} /> {source || "Other"}
           </span>
         );
     }

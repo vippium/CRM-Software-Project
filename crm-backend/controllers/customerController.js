@@ -2,33 +2,48 @@ import Customer from "../models/Customer.js";
 import User from "../models/User.js";
 
 // Get all customers
-export const getAllCustomers = async(req, res) => {
-    try {
-        const customers = await Customer.find()
-            .sort({ createdAt: -1 })
-            .populate("assignedRep", "name email role");
-        res.json(customers);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+export const getAllCustomers = async (req, res) => {
+  try {
+    const filter =
+      req.user.role === "admin" ? {} : { assignedRep: req.user.id };
+
+    const customers = await Customer.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("assignedRep", "name email role");
+
+    res.json(customers);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // Get customer by ID
-export const getCustomerById = async(req, res) => {
-    try {
-        const customer = await Customer.findById(req.params.id)
-            .populate("assignedRep", "name email role");
-        if (!customer) return res.status(404).json({ message: "Customer not found" });
-        res.json(customer);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+export const getCustomerById = async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.params.id).populate(
+      "assignedRep",
+      "name email role"
+    );
+
+    if (!customer)
+      return res.status(404).json({ message: "Customer not found" });
+
+    if (
+      req.user.role !== "admin" &&
+      customer.assignedRep?._id.toString() !== req.user.id
+    ) {
+      return res.status(403).json({ message: "Access denied" });
     }
+
+    res.json(customer);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // Create new customer
 export const createCustomer = async(req, res) => {
     try {
-        // Optional validation: check assignedRep if provided
         if (req.body.assignedRep) {
             const rep = await User.findById(req.body.assignedRep);
             if (!rep || rep.role !== "sales") {
@@ -49,7 +64,6 @@ export const createCustomer = async(req, res) => {
 // Update customer
 export const updateCustomer = async(req, res) => {
     try {
-        // Optional validation: check assignedRep if provided
         if (req.body.assignedRep) {
             const rep = await User.findById(req.body.assignedRep);
             if (!rep || rep.role !== "sales") {

@@ -2,29 +2,40 @@ import Task from "../models/Task.js";
 import Notification from "../models/notification.js";
 
 // Get all tasks
-export const getAllTasks = async(req, res) => {
-    try {
-        const tasks = await Task.find()
-            .populate("assignedTo", "name email role")
-            .populate("customerId", "name email company");
-        res.json(tasks);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+export const getAllTasks = async (req, res) => {
+  try {
+    const filter = req.user.role === "admin" ? {} : { assignedTo: req.user.id };
+
+    const tasks = await Task.find(filter)
+      .populate("assignedTo", "name email role")
+      .populate("customerId", "name email company");
+
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // Get a single task
-export const getTaskById = async(req, res) => {
-    try {
-        const task = await Task.findById(req.params.id)
-            .populate("assignedTo", "name email role")
-            .populate("customerId", "name email company");
+export const getTaskById = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email role")
+      .populate("customerId", "name email company");
 
-        if (!task) return res.status(404).json({ message: "Task not found" });
-        res.json(task);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    if (
+      req.user.role !== "admin" &&
+      task.assignedTo?._id.toString() !== req.user.id
+    ) {
+      return res.status(403).json({ message: "Access denied" });
     }
+
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // Create a task
@@ -33,13 +44,18 @@ export const createTask = async(req, res) => {
         const task = new Task(req.body);
         await task.save();
 
-        // 🔔 Create notification for assigned user
         if (task.assignedTo) {
-            await Notification.create({
+            const notification = await Notification.create({
                 userId: task.assignedTo,
                 taskId: task._id,
                 message: `A new task "${task.title}" has been assigned to you.`,
             });
+
+            // 🔥 Emit real-time notification
+            req.app
+                .get("io")
+                .to(task.assignedTo.toString())
+                .emit("newNotification", notification);
         }
 
         res.status(201).json(task);
@@ -59,13 +75,18 @@ export const updateTask = async(req, res) => {
 
         if (!task) return res.status(404).json({ message: "Task not found" });
 
-        // 🔔 Notify assigned user about update
         if (task.assignedTo) {
-            await Notification.create({
-                userId: task.assignedTo._id || task.assignedTo, // works if populated or just ID
+            const notification = await Notification.create({
+                userId: task.assignedTo._id || task.assignedTo,
                 taskId: task._id,
                 message: `Task "${task.title}" has been updated.`,
             });
+
+            // 🔥 Emit real-time notification
+            req.app
+                .get("io")
+                .to((task.assignedTo._id || task.assignedTo).toString())
+                .emit("newNotification", notification);
         }
 
         res.json(task);
@@ -80,13 +101,18 @@ export const deleteTask = async(req, res) => {
         const task = await Task.findByIdAndDelete(req.params.id);
         if (!task) return res.status(404).json({ message: "Task not found" });
 
-        // 🔔 Optional: Notify user if their task was deleted
         if (task.assignedTo) {
-            await Notification.create({
+            const notification = await Notification.create({
                 userId: task.assignedTo,
                 taskId: task._id,
                 message: `Task "${task.title}" has been deleted.`,
             });
+
+            // 🔥 Emit real-time notification
+            req.app
+                .get("io")
+                .to(task.assignedTo.toString())
+                .emit("newNotification", notification);
         }
 
         res.json({ message: "Task deleted successfully" });

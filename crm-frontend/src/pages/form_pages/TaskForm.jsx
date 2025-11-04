@@ -90,7 +90,7 @@ export default function TaskForm() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 p-8 pt-24 flex items-start justify-center">
+    <div className="fixed inset-0 overflow-hidden flex items-start justify-center p-8 pt-28 bg-gray-50 text-gray-800">
       <GlassCard className="w-full max-w-2xl p-8">
         <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center gap-2">
           {isEditing ? (

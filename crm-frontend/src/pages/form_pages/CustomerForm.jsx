@@ -5,11 +5,13 @@ import API from "../../services/api.js";
 import { UserPlus, Edit3 } from "lucide-react";
 import FormInput from "../../components/FormInput.jsx";
 import FormTextarea from "../../components/FormTextarea.jsx";
+import FormSelect from "../../components/FormSelect.jsx";
 import { isAdmin, isSales } from "../../services/auth.js";
 
 export default function CustomerForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const isEditing = !!id;
 
   const [form, setForm] = useState({
     name: "",
@@ -23,8 +25,7 @@ export default function CustomerForm() {
 
   const [reps, setReps] = useState([]);
 
-  // Access control
-  if (!isAdmin() && !(isSales() && id)) {
+  if (!isAdmin() && !(isSales() && isEditing)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center p-8">
         <img
@@ -43,21 +44,19 @@ export default function CustomerForm() {
     );
   }
 
-  // Load reps for dropdown
   useEffect(() => {
     API.get("/users/sales-reps")
       .then((res) => setReps(res.data))
       .catch((err) => console.error("Error fetching sales reps", err));
   }, []);
 
-  // Load existing customer in edit mode
   useEffect(() => {
-    if (id) {
+    if (isEditing) {
       API.get(`/customers/${id}`)
         .then((res) => setForm(res.data))
         .catch((err) => console.error("Error fetching customer", err));
     }
-  }, [id]);
+  }, [id, isEditing, navigate]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -66,7 +65,7 @@ export default function CustomerForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (id) {
+      if (isEditing) {
         await API.put(`/customers/${id}`, form);
       } else {
         if (!isAdmin()) return;
@@ -78,11 +77,19 @@ export default function CustomerForm() {
     }
   };
 
+  const assignedRepOptions = [
+    { value: "", label: "Select a Rep" },
+    ...reps.map((rep) => ({
+      value: rep._id,
+      label: `${rep.name} (${rep.email})`,
+    })),
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 p-8 pt-24 flex items-start justify-center">
+    <div className="fixed inset-0 overflow-hidden flex items-start justify-center p-8 pt-28 bg-gray-50 text-gray-800">
       <GlassCard className="w-full max-w-2xl p-8">
         <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center gap-2">
-          {id ? (
+          {isEditing ? (
             <>
               <Edit3 size={28} className="text-green-600" /> Edit Customer
             </>
@@ -131,25 +138,13 @@ export default function CustomerForm() {
             onChange={handleChange}
           />
 
-          {/* Assigned Rep Dropdown */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Assigned Rep
-            </label>
-            <select
-              name="assignedRep"
-              value={form.assignedRep || ""}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
-            >
-              <option value="">Select a Rep</option>
-              {reps.map((rep) => (
-                <option key={rep._id} value={rep._id}>
-                  {rep.name} ({rep.email})
-                </option>
-              ))}
-            </select>
-          </div>
+          <FormSelect
+            label="Assigned Rep"
+            name="assignedRep"
+            value={form.assignedRep}
+            onChange={handleChange}
+            options={assignedRepOptions}
+          />
 
           <FormTextarea
             label="Notes"
@@ -158,17 +153,17 @@ export default function CustomerForm() {
             onChange={handleChange}
           />
 
-          {(isAdmin() || (isSales() && id)) && (
+          {(isAdmin() || (isSales() && isEditing)) && (
             <button
               type="submit"
               className={`md:col-span-2 flex items-center justify-center gap-2 ${
-                id
+                isEditing
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-blue-600 hover:bg-blue-700"
               } text-white font-semibold px-6 py-3 rounded-full transition-colors duration-200`}
             >
-              {id ? <Edit3 size={20} /> : <UserPlus size={20} />}
-              {id ? "Update Customer" : "Save Customer"}
+              {isEditing ? <Edit3 size={20} /> : <UserPlus size={20} />}
+              {isEditing ? "Update Customer" : "Save Customer"}
             </button>
           )}
         </form>

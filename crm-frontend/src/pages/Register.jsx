@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api.js";
 import GlassCard from "../components/GlassCard.jsx";
+import { User, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
 
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,50 +27,89 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <GlassCard className="w-full max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          📝 Register
+    <div
+      className="relative min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: `url('/your-background-image.jpg')` }}
+    >
+      {/* Overlay for a blur effect and darkening */}
+      <div className="absolute inset-0 bg-white/30 backdrop-blur-md z-0"></div>
+
+      <GlassCard className="w-full max-w-sm p-8 z-10 text-center">
+        <div className="flex justify-center items-center mb-6">
+          <UserPlus size={48} className="text-blue-600" />
+        </div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          Create an Account
         </h2>
+        <p className="text-gray-600 mb-8">Join the team at Vippium Core</p>
+
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Name"
-            value={form.name}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
-            required
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
-            required
-          />
+          <div className="relative">
+            <User
+              size={20}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              name="name"
+              placeholder="Name"
+              value={form.name}
+              onChange={handleChange}
+              className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+              required
+            />
+          </div>
+          <div className="relative">
+            <Mail
+              size={20}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+              required
+            />
+          </div>
+          <div className="relative">
+            <Lock
+              size={20}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              className="w-full pl-12 pr-12 py-2 border border-gray-300 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded-xl hover:bg-blue-600 transition"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-2 rounded-full hover:bg-blue-700 transition-colors duration-200"
           >
+            <UserPlus size={20} />
             Register
           </button>
         </form>
-        <p className="text-sm text-gray-600 mt-4 text-center">
+
+        <p className="text-sm text-gray-600 mt-6">
           Already have an account?{" "}
-          <Link to="/" className="text-blue-600 hover:underline">
+          <Link to="/" className="text-blue-600 font-medium hover:underline">
             Login
           </Link>
         </p>
